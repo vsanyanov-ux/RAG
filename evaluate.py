@@ -53,8 +53,23 @@ def run_evaluation():
             llm=ragas_llm
         )
         
+        print("Raw Evaluation Result:", result)
+        
         # Determine pass/fail based on a threshold
-        score = result.get('faithfulness', 0)
+        try:
+            import ast
+            score_dict = ast.literal_eval(str(result))
+            score = float(score_dict.get("faithfulness", 0.0))
+        except Exception:
+            try:
+                score = float(result["faithfulness"])
+            except Exception:
+                score = 0.0
+                
+        import math
+        if math.isnan(score):
+            score = 0.0
+            
         threshold = 0.85
         
         if score >= threshold:
@@ -65,8 +80,10 @@ def run_evaluation():
             return 1
             
     except Exception as e:
-        print(f"Evaluation Failed due to error: {e}")
-        print("Note: Ensure you have set GIGACHAT_CREDENTIALS environment variable.")
+        import traceback
+        traceback.print_exc()
+        print(f"Evaluation Failed due to error: {repr(e)}")
+        print("Note: Ensure you have set YC_API_KEY and YC_FOLDER_ID environment variables.")
         return 1
 
 if __name__ == "__main__":

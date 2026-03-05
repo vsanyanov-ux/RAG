@@ -37,7 +37,7 @@ def query_system(question: str):
     
     _, prompt_temp = get_rag_chain(retriever)
     
-    initial_results = retriever.get_relevant_documents(question)
+    initial_results = retriever.invoke(question)
     print(f"Retrieved {len(initial_results)} initial documents. Re-ranking...")
     
     # Initialize reranker and re-rank the documents
@@ -46,14 +46,65 @@ def query_system(question: str):
     
     print(f"\nFinal Top Results for: {question}")
     print("-" * 50)
+    contexts = []
     for i, doc in enumerate(final_results):
         source = doc.metadata.get('source', 'Unknown')
         print(f"Rank {i+1} [Source: {source}]:")
-        print(doc.page_content[:500] + "...")
+        print(doc.page_content[:200] + "...")
         print("-" * 30)
+        contexts.append(f"[Source: {source}]\n{doc.page_content}")
+        
+    print("\nGenerating AI Answer...")
+    
+    from langchain_community.chat_models import ChatYandexGPT
+    from langchain_core.output_parsers import StrOutputParser
+    
+    yc_api_key = os.getenv("YC_API_KEY")
+    yc_folder_id = os.getenv("YC_FOLDER_ID")
+    
+    if not yc_api_key or not yc_folder_id:
+        print("❌ Error: YC_API_KEY and YC_FOLDER_ID not found in environment. Cannot generate answer.")
+        return
+        
+    llm = ChatYandexGPT(
+        api_key=yc_api_key,
+        folder_id=yc_folder_id,
+        model_uri=f"gpt://{yc_folder_id}/yandexgpt/latest",
+        temperature=0.1
+    )
+    
+    chain = prompt_temp | llm | StrOutputParser()
+    
+    context_text = "\n\n".join(contexts)
+    answer = chain.invoke({"context": context_text, "question": question})
+    
+    print("\n" + "="*50)
+    print("🤖 AI ANSWER:")
+    print("="*50)
+    print(answer)
+    print("="*50 + "\n")
 
 if __name__ == "__main__":
-    # Example:
-    # ingest_data("data/my_doc.pdf", "pdf")
-    # query_system("Specific keyword query")
     print("RAG System (Phase 2 with Re-ranking) Ready.")
+    
+    # You can uncomment this to index a new document:
+    # ingest_data("data/Progress_and_Poverty.pdf", "pdf")
+    
+    # Interactive query loop
+    while True:
+        try:
+            user_question = input("\nAsk a question (or type 'exit' to quit): ")
+            if user_question.lower() in ['exit', 'quit', 'q']:
+                break
+            if not user_question.strip():
+                continue
+                
+            try:
+                query_system(user_question)
+            except Exception as e:
+                import traceback
+                print("\n❌ Error during query processing:")
+                traceback.print_exc()
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            break

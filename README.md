@@ -12,12 +12,13 @@ A robust, modular, and production-ready Retrieval-Augmented Generation (RAG) bac
 *   **Citation & Prompt Management:** Strict system prompts managed externally (`config/prompts.yaml`) forcing the LLM to ground its answers exclusively in retrieved contexts and cite sources.
 *   **Automated Evaluation Pipeline (CI/CD Ready):** Includes a `golden_dataset.json` and a script (`evaluate.py`) that utilizes the **Ragas** framework to evaluate the Faithfulness of the system using YandexGPT, natively returning exit codes suitable for GitHub Actions.
 *   **Conversational Web UI:** A beautiful web interface built with **Streamlit** (`app.py`), featuring chat history, AI typing indicators, and expandable source context wrappers.
+*   **Observability & Tracing:** Full integration with **LangSmith** for deep visibility into LLM calls, token usage, latency, and retrieval performance without any code changes.
 
 ## 🛠️ Tech Stack
 *   **Frameworks:** LangChain, HuggingFace Transformers, Streamlit
 *   **Databases:** ChromaDB
 *   **Algorithms:** BM25 (Rank-BM25), RRF, CrossEncoder
-*   **Evaluation:** Ragas, YandexGPT API
+*   **Evaluation & Observability:** Ragas, YandexGPT API, LangSmith
 *   **CI/CD:** GitHub Actions
 
 ## 📂 Project Structure & File Index
@@ -48,10 +49,17 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configuration
-Create a `.env` file in the root directory and add your Yandex Cloud credentials (required for the LLM answer generation and the evaluation pipeline):
+Create a `.env` file in the root directory and add your Yandex Cloud and LangSmith credentials:
 ```env
+# Required for LangChain LLM generation
 YC_API_KEY=your_yandex_api_key
 YC_FOLDER_ID=your_yandex_folder_id
+
+# Required for LangSmith full-stack tracing
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+LANGCHAIN_API_KEY=your_langsmith_api_key
+LANGCHAIN_PROJECT="YandexGPT-RAG"
 ```
 
 ### 3. Usage (Web Interface)
@@ -75,3 +83,4 @@ python evaluate.py
 2. **User Query -> BM25 Retriever & Vector Retriever -> RRF Normalization**
 3. **Top 10 Chunks -> CrossEncoder Re-Ranking -> Top 3 Chunks**
 4. **Top 3 Chunks + Prompt -> ChatYandexGPT -> Streamlit Interface**
+5. **Background Logging -> LangSmith Trace Export**

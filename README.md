@@ -19,6 +19,20 @@ A robust, modular, and production-ready Retrieval-Augmented Generation (RAG) bac
 *   **Evaluation:** Ragas, YandexGPT API
 *   **CI/CD:** GitHub Actions
 
+## 📂 Project Structure & File Index
+
+* **`main.py`** — The entry point of the backend system. Handles data ingestion and executing Hybrid RAG queries.
+* **`loader.py`** — Parsers for loading content from PDFs, Markdown files, and Web URLs.
+* **`splitter.py`** — Text chunking logic using `RecursiveCharacterTextSplitter`.
+* **`vector_store.py`** — Manages the local ChromaDB vector database and text embeddings.
+* **`hybrid_retriever.py`** — Implements Hybrid Search (BM25 + Semantic Vector) with Reciprocal Rank Fusion (RRF).
+* **`reranker.py`** — Implements second-stage retrieval using a HuggingFace `CrossEncoder` to re-order the retrieved chunks by strict relevance.
+* **`rag_chain.py`** — Connects the prompt and the LLM using LangChain Expression Language (LCEL), enforcing citation rules.
+* **`evaluate.py`** — Automated evaluation pipeline script using the **Ragas** framework to score AI responses for Faithfulness.
+* **`config/prompts.yaml`** — Externalized management of the System Prompt and generation rules.
+* **`data/golden_dataset.json`** — The ground-truth testing dataset (Questions, Contexts, Answers) used for validation.
+* **`.github/workflows/evaluate_rag.yml`** — Continuous Integration pipeline strictly running on GitHub Actions.
+
 ## 🚀 Getting Started
 
 ### 1. Installation
